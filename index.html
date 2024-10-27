@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classificação de Notas</title>
+    <style>
+        /* Estilo da página */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Cabeçalho com logo */
+        .header {
+            background-color: #333;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Botões */
+        button {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        /* Tabela de classificação */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #333;
+            color: white;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        /* Formulário de adicionar pessoas */
+        #addForm {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+        }
+
+        input[type="text"], input[type="file"], input[type="color"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cabeçalho com logo -->
+    <div class="header">
+        <h1>Classificação</h1>
+    </div>
+
+    <!-- Container principal -->
+    <div class="container">
+
+        <!-- Botão para alternar entre visualização e edição -->
+        <button onclick="toggleView()">Modo Ver/Editar</button>
+
+        <!-- Tabela de Classificação -->
+        <table id="rankingTable">
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Nome</th>
+                    <th>Sobrenome</th>
+                    <th>Nota</th>
+                    <th>Classificação</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Linhas da tabela serão adicionadas aqui -->
+            </tbody>
+        </table>
+
+        <!-- Botão de Adicionar Pessoa -->
+        <button onclick="showAddForm()">Adicionar Pessoa</button>
+
+        <!-- Formulário de Adicionar Pessoa -->
+        <div id="addForm">
+            <h2>Adicionar Pessoa</h2>
+            <input type="text" id="nome" placeholder="Nome">
+            <input type="text" id="sobrenome" placeholder="Sobrenome">
+            <input type="text" id="nota" placeholder="Nota (0 a 10)">
+            <label>Escolha a foto:</label>
+            <input type="file" id="fotoInput" accept="image/*">
+            <label>Escolha uma cor:</label>
+            <input type="color" id="cor">
+            <button onclick="addPessoa()">Adicionar</button>
+            <button onclick="hideAddForm()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let editMode = false;
+
+        function toggleView() {
+            const pin = prompt("Digite o PIN para acessar o modo de edição:");
+            if (pin === "JOAO900") {
+                editMode = !editMode;
+                alert(editMode ? "Modo de Edição Ativado" : "Modo de Visualização Ativado");
+            } else {
+                alert("PIN incorreto! Acesso negado.");
+            }
+        }
+
+        function showAddForm() {
+            if (editMode) {
+                document.getElementById('addForm').style.display = 'block';
+            } else {
+                alert("Apenas administradores podem adicionar pessoas.");
+            }
+        }
+
+        function hideAddForm() {
+            document.getElementById('addForm').style.display = 'none';
+        }
+
+        function addPessoa() {
+            const nome = document.getElementById('nome').value;
+            const sobrenome = document.getElementById('sobrenome').value;
+            const nota = parseFloat(document.getElementById('nota').value);
+            const cor = document.getElementById('cor').value;
+            const fotoInput = document.getElementById('fotoInput');
+
+            if (!nome || !sobrenome || isNaN(nota) || !fotoInput.files[0]) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            const tabela = document.getElementById('rankingTable').getElementsByTagName('tbody')[0];
+            const novaLinha = tabela.insertRow();
+
+            // Processar a imagem selecionada
+            const celulaFoto = novaLinha.insertCell(0);
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                celulaFoto.innerHTML = `<img src="${e.target.result}" alt="Foto" style="width:50px;height:50px;border-radius:50%;">`;
+            };
+            reader.readAsDataURL(fotoInput.files[0]);
+
+            // Preencher os outros dados
+            novaLinha.insertCell(1).innerHTML = `<span style="color:${cor}">${nome}</span>`;
+            novaLinha.insertCell(2).innerHTML = `<span style="color:${cor}">${sobrenome}</span>`;
+            novaLinha.insertCell(3).innerHTML = getStars(nota);
+            novaLinha.insertCell(4).innerText = getRatingLabel(nota);
+
+            hideAddForm();
+        }
+
+        function getStars(nota) {
+            const estrelas = Math.round(nota);
+            let resultado = '';
+            for (let i = 0; i < 10; i++) {
+                resultado += (i < estrelas) ? '⭐' : '☆';
+            }
+            return resultado;
+        }
+
+        function getRatingLabel(nota) {
+            if (nota >= 9) return "Excelente 👍";
+            else if (nota >= 7) return "Bom 😊";
+            else if (nota >= 5) return "Médio 😐";
+            else if (nota >= 3) return "Ruim 😟";
+            else return "Horrível 😖";
+        }
+    </script>
+</body>
+</html>
